@@ -5,7 +5,7 @@ import "./EventTickets.sol";
 import "./DefaultEventTickets.sol";
 
 contract EventFactory {
-    uint256 public quantity = 0;
+    uint256 public quantity;
 
     /*
         Create a struct called "EventData".
@@ -32,7 +32,19 @@ contract EventFactory {
         string memory _description,
         string memory _url,
         uint256 _totalTickets
-    ) public { }
+    ) public { 
+        EventData storage data = events[quantity];
+        data.description = _description;
+        data.manager = msg.sender;
+        data.timestamp = block.timestamp;
+        data.eventTickets = new DefaultEventsTickets(
+            _description,
+            _url,
+            _totalTickets
+        );
+
+        quantity++;
+    }
 
     /*
         Define a function called addEvent().
@@ -40,7 +52,13 @@ contract EventFactory {
         add the contract to the mapping storage variable (events).
     */
     function addEvent(EventTickets eventTickets) external { 
-        // ....receive...
+        (
+            string memory description, 
+            , 
+            uint256 totalTickets, 
+            uint256 sales, 
+            bool isOpen
+        ) = eventTickets.readEvent();
         // TODO
     }
 
@@ -49,5 +67,7 @@ contract EventFactory {
         This function receive the event id and returns 
         the event data struct.
     */
-    function getEvent(uint256 id) external view returns (EventData memory) { }
+    function getEvent(uint256 id) external view returns (EventData memory) { 
+        return events[id];
+    }
 }

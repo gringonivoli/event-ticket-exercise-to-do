@@ -11,7 +11,9 @@ contract DefaultEventTickets is EventTickets {
         Use the appropriate keyword to allow ether transfers.
      */
 
-    // TODO: refactor
+    address payable public owner;
+
+    // TODO: refactor: Ticket price sea variable
     uint256 TICKET_PRICE = 100 wei;
 
     /*
@@ -20,7 +22,15 @@ contract DefaultEventTickets is EventTickets {
         Choose the appropriate variable type for each field.
         The "buyers" field should keep track of addresses and how many tickets each buyer purchases.
     */
-    
+
+    struct Event {
+        string description;
+        string website;
+        uint256 totalTickets;
+        uint256 sales;
+        mapping(address => uint256) buyers;
+        bool isOpen;
+    }
 
     Event myEvent;
 
@@ -31,12 +41,21 @@ contract DefaultEventTickets is EventTickets {
         LogEndSale should provide infromation about the contract owner and the balance transferred to them.
     */
 
+    event LogBuyTickets(address buyer, uint256 numTickets);
+    event LogGetRefund(address accountRefunded, uint256 numTickets);
+    event LogEndSale(address owner, uint256 balance);
+
     /*
         Create a modifier that throws an error if the msg.sender is not the owner.
         TODO: refactoring; use openzeppelin Ownable contract.
         (https://docs.openzeppelin.com/contracts/4.x/api/access#Ownable)
         (https://docs.openzeppelin.com/learn/developing-smart-contracts#importing_openzeppelin_contracts)
     */
+
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Not owner");
+        _;
+    }
 
     /*
         Define a constructor.
@@ -45,6 +64,17 @@ contract DefaultEventTickets is EventTickets {
         Set the appropriate myEvent details.
     */
 
+    constructor(
+        string memory _description,
+        string memory _url,
+        uint256 _totalTickets
+    ) {
+        owner = payable(msg.sender);
+        myEvent.description = _description;
+        myEvent.website = _url;
+        myEvent.totalTickets = _totalTickets;
+        myEvent.isOpen = true;
+    }
 
     /*
         Define a function called readEvent() that returns the event details.
@@ -61,7 +91,15 @@ contract DefaultEventTickets is EventTickets {
             uint256 sales,
             bool isOpen
         )
-    { }
+    {
+        return (
+            myEvent.description,
+            myEvent.website,
+            myEvent.totalTickets,
+            myEvent.sales,
+            myEvent.isOpen
+        );
+    }
 
     /*
         Define a function called getBuyerTicketCount().
@@ -69,7 +107,13 @@ contract DefaultEventTickets is EventTickets {
         returns the number of tickets that address has purchased.
     */
 
-    function getBuyerTicketCount(address buyer) external view returns (uint256) { }
+    function getBuyerTicketCount(address buyer)
+        external
+        view
+        returns (uint256)
+    {
+        return myEvent.buyers[buyer];
+    }
 
     /*
         Define a function called buyTickets().
@@ -86,7 +130,24 @@ contract DefaultEventTickets is EventTickets {
             - refund any surplus value sent with the transaction
             - emit the appropriate event
     */
-    function buyTickets(uint256 quantity) external payable { }
+    function buyTickets(uint256 quantity) external payable {
+        require(myEvent.isOpen == true, "Event already closed");
+        require(msg.value >= (quantity * TICKET_PRICE), "Funds not enough");
+        require(
+            quantity <= (myEvent.totalTickets - myEvent.sales),
+            "Out of stock"
+        );
+
+        myEvent.buyers[msg.sender] += quantity;
+        myEvent.sales += quantity;
+
+        uint256 totalPrice = quantity * TICKET_PRICE;
+        if (msg.value > totalPrice) {
+            payable(msg.sender).transfer(msg.value - totalPrice);
+        }
+
+        emit LogBuyTickets(msg.sender, quantity);
+    }
 
     /*
         Define a function called getRefund().
@@ -98,7 +159,7 @@ contract DefaultEventTickets is EventTickets {
             - Emit the appropriate event.
     */
 
-    function getRefund(uint256 toRefund) external { 
+    function getRefund(uint256 toRefund) external {
         // TODO
     }
 
@@ -114,5 +175,5 @@ contract DefaultEventTickets is EventTickets {
 
     function endSale() external override onlyOwner {
         // TODO
-     }
+    }
 }
