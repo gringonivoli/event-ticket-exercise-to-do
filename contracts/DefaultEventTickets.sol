@@ -33,6 +33,9 @@ contract DefaultEventTickets is EventTickets {
 
     /*
         Create a modifier that throws an error if the msg.sender is not the owner.
+        TODO: refactoring; use openzeppelin Ownable contract.
+        (https://docs.openzeppelin.com/contracts/4.x/api/access#Ownable)
+        (https://docs.openzeppelin.com/learn/developing-smart-contracts#importing_openzeppelin_contracts)
     */
 
     /*
